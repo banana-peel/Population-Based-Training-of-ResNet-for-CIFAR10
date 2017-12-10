@@ -40,6 +40,9 @@ class cifarResnet(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+            elif isinstance(m, nn.Linear):
+                n = m.weight.size()[0] * m.weight.size()[1]
+                m.weight.data.normal_(0, math.sqrt(2. / n))
         
     def _make_layer(self, block, planes, blocks, stride=1):
         '''
