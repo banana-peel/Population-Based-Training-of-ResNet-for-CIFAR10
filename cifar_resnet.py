@@ -8,6 +8,7 @@ Created on Wed Dec  6 17:44:38 2017
 import torch
 from torchvision.models import resnet
 import torch.nn as nn
+import math
 
 # Have to use resnet.BasicBlock
 
@@ -30,6 +31,15 @@ class cifarResnet(nn.Module):
         self.layer3 = self._make_layer(block, 64, layers[2], stride=2)
         self.avgpool = nn.AvgPool2d(8,stride = 1)
         self.fc = nn.Linear(64,num_classes)
+        
+        #Adding modified form of Xavier weight initialization
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
         
     def _make_layer(self, block, planes, blocks, stride=1):
         '''
