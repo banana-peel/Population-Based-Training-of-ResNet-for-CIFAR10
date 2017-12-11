@@ -89,6 +89,8 @@ tfm_img, tfm_lab = trfm(req_dataset[10])
 # Test the Dataset
 
 transformed_dataset = cifar_data(X_train,y_train,transform=ToTensor())
+validation_data = cifar_data(X_val,y_val,transform=ToTensor())
+test_data = cifar_data(X_test,y_test,transform=ToTensor())
 
 #for i in range(3,7):
 #    sample = transformed_dataset[i]
@@ -97,7 +99,8 @@ transformed_dataset = cifar_data(X_train,y_train,transform=ToTensor())
 # Create the data loader and test it
     
 dataloader = DataLoader(transformed_dataset, batch_size = 10, shuffle = True, num_workers=1)
-
+val_dataloader = DataLoader(validation_data, batch_size = 100, shuffle = True, num_workers=0)
+test_dataloader = DataLoader(test_data, batch_size = 100, shuffle = True, num_workers=0)
 #g= 0
 #for samples in dataloader:
 #    img,labels = samples
@@ -110,13 +113,56 @@ dataloader = DataLoader(transformed_dataset, batch_size = 10, shuffle = True, nu
 #model = resnet.ResNet(BasicBlock, [2, 2, 2, 2], num_classes = 10)
 model = cr.ResNet56()
     
-for i,data in enumerate(dataloader):
-    inp = Variable(data[0])
-    y = model(inp)
-    print(y)
-    break
+#for i,data in enumerate(dataloader):
+#    inp = Variable(data[0])
+#    y = model(inp)
+#    print(y)
+#    break
 
+# Defining Loss function and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0001)
 
+# Training the network
+
+val_img, val_label = next(iter(val_dataloader))
+correct = 0
+total = 0
+for epoch in range(2):  # loop over the dataset multiple times
+
+    running_loss = 0.0
+    for i, data in enumerate(dataloader, 0):
+        # get the inputs
+        inputs, labels = data
+
+        # wrap them in Variable
+        inputs, labels = Variable(inputs), Variable(labels)
+
+        # zero the parameter gradients
+        optimizer.zero_grad()
+
+        # forward + backward + optimize
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        # print statistics
+        running_loss += loss.data[0]
+        if i % 1000 == 999:
+            val_outputs = model(Variable(val_img))
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum()
+            print("Validation accuracy = ", 100*correct/total)
+            total=0
+            correct=0
+        if i % 100 == 99:    # print every 2000 mini-batches
+            print('[%d, %5d] loss: %.3f' %
+                  (epoch + 1, i + 1, running_loss / 100))
+            running_loss = 0.0
+
+print('Finished Training')
 
 
 
