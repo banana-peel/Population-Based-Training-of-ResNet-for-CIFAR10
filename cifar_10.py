@@ -43,7 +43,7 @@ import pickle
 
 
 
-def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,return_top_arg):
+def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,return_top_arg, learn_rate):
     import torch
     import torch.nn as nn
     import torch.optim as optim
@@ -67,7 +67,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     model = cr.ResNet56()
     
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0001)
+    optimizer = optim.SGD(model.parameters(), lr=learn_rate, momentum=0.9, weight_decay=0.0001)
     
     dataloader, val_dataloader, test_dataloader = ld.create_dataloader()
     epoch = 0
@@ -209,8 +209,10 @@ if __name__ == "__main__":
     processes = []
     for rank in range(2):
         net_acc_dict[rank] = []
+        learning_rate = [0.01, 0.06, 0.001, 0.008]
         p = mp.Process(target=training_cifar_multi, \
-            args = (train_state_dict, val_acc_dict, net_acc_dict ,rank,return_top_arg))
+            args = (train_state_dict, val_acc_dict, net_acc_dict ,rank, \
+                    return_top_arg, learning_rate[rank]))
         p.start()
         processes.append(p)
     for p in processes:
