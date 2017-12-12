@@ -24,7 +24,7 @@ Created on Mon Dec  4 18:29:30 2017
 #import load_cifar_data as ld
 #from torchvision.models import resnet
 #import cifar_resnet as cr
-
+import torch
 import torch.multiprocessing as mp
 import pickle
 
@@ -65,6 +65,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
 #    import torch.multiprocessing as mp
     
     model = cr.ResNet56()
+    model.cuda(rank)
     
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learn_rate, momentum=0.9, weight_decay=0.0001)
@@ -101,7 +102,8 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
                       (epoch + 1, i + 1, running_loss / 1000))
                 net_acc_dict[name].append(running_loss/1000)
                 running_loss = 0.0
-            
+            if i==3:
+                break
     
     #Saving model to manager
         train_state_dict[name] = {'state_dict': model.state_dict(), 'optimizer': 
@@ -205,9 +207,9 @@ if __name__ == "__main__":
     train_state_dict = mp.Manager().dict()
     val_acc_dict = mp.Manager().dict()
     net_acc_dict = mp.Manager().dict()
-    
+    print(torch.cuda.device_count())
     processes = []
-    for rank in range(2):
+    for rank in range(4):
         net_acc_dict[rank] = []
         learning_rate = [0.01, 0.06, 0.001, 0.008]
         p = mp.Process(target=training_cifar_multi, \
