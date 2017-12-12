@@ -10,6 +10,8 @@ import os
 from six.moves import cPickle as pickle
 import numpy as np
 from PIL import Image
+from torch.utils.data import DataLoader, Dataset
+import torch
 
 
 def download_data(filename):
@@ -77,3 +79,72 @@ def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000,
         X_test -= mean_image
 
     return X_train, y_train, X_val, y_val, X_test, y_test
+
+
+
+
+
+#Create Dataset
+
+class cifar_data(Dataset):
+    '''
+    Creates the dataset for the cifar data
+    initiates the __len__ and __getitem__
+    '''
+    def __init__(self,images,labels, transform = None):
+        self.images = images
+        self.labels = labels
+        self.transform = transform
+    
+    def __len__(self):
+        return len(self.labels)
+    
+    def __getitem__(self,indx):
+        imgs = self.images[indx]
+        labls = self.labels[indx]
+        
+        if self.transform:
+            imgs, labls = self.transform((imgs,labls))
+        return (imgs,labls)
+
+
+# Create the transforms
+
+class ToTensor(object):
+    '''Convert ndarrays in sample to Tensors
+        We don't need to make a tensor out of labels
+        as it is only 1 dim array
+        '''
+
+    def __call__(self, inpt):
+
+        # swap color axis because
+        # numpy image: H x W x C
+        # torch image: C X H X W
+        image,label = inpt
+        image = image.transpose((2, 0, 1))
+        return (torch.from_numpy(image).float(),label)
+
+
+# Create the Dataset and the Dataloader
+
+def create_dataloader():
+    '''
+    This will return dataloader with training, validatin and testing data respectively
+    '''
+    X_train, y_train, X_val, y_val, X_test, y_test = get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000,
+                     subtract_mean=True)
+
+    transformed_dataset = cifar_data(X_train,y_train,transform=ToTensor())
+    validation_data = cifar_data(X_val,y_val,transform=ToTensor())
+    test_data = cifar_data(X_test,y_test,transform=ToTensor())
+    
+        
+    dataloader = DataLoader(transformed_dataset, batch_size = 10, shuffle = True, num_workers=0)
+    val_dataloader = DataLoader(validation_data, batch_size = 100, shuffle = True, num_workers=0)
+    test_dataloader = DataLoader(test_data, batch_size = 100, shuffle = True, num_workers=0)
+    
+    return dataloader, val_dataloader, test_dataloader
+
+
+
