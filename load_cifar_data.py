@@ -128,7 +128,7 @@ class ToTensor(object):
 
 # Create the Dataset and the Dataloader
 
-def create_dataloader():
+def create_dataloader(train_batch=10, validation_batch=100, test_batch=100):
     '''
     This will return dataloader with training, validatin and testing data respectively
     '''
@@ -140,9 +140,9 @@ def create_dataloader():
     test_data = cifar_data(X_test,y_test,transform=ToTensor())
     
         
-    dataloader = DataLoader(transformed_dataset, batch_size = 10, shuffle = True, num_workers=0)
-    val_dataloader = DataLoader(validation_data, batch_size = 100, shuffle = True, num_workers=0)
-    test_dataloader = DataLoader(test_data, batch_size = 100, shuffle = True, num_workers=0)
+    dataloader = DataLoader(transformed_dataset, batch_size = train_batch, shuffle = True, num_workers=0)
+    val_dataloader = DataLoader(validation_data, batch_size = validation_batch, shuffle = True, num_workers=0)
+    test_dataloader = DataLoader(test_data, batch_size = test_batch, shuffle = True, num_workers=0)
     
     return dataloader, val_dataloader, test_dataloader
 
