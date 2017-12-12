@@ -26,6 +26,7 @@ Created on Mon Dec  4 18:29:30 2017
 #import cifar_resnet as cr
 
 import torch.multiprocessing as mp
+import pickle
 
 #Load images
 
@@ -97,12 +98,10 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
             running_loss += loss.data[0]
             if i % 1000 == 999:    # print every 2000 mini-batches
                 print('process =', name, '[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 100))
-                net_acc_dict[name].append(running_loss/100)
+                      (epoch + 1, i + 1, running_loss / 1000))
+                net_acc_dict[name].append(running_loss/1000)
                 running_loss = 0.0
             
-            if i==13:
-                break
     
     #Saving model to manager
         train_state_dict[name] = {'state_dict': model.state_dict(), 'optimizer': 
@@ -217,4 +216,13 @@ if __name__ == "__main__":
     for p in processes:
         p.join()
 
+# Plotting Graphs
+#    plt.figure()
+#    for pros in net_acc_dict.keys():
+#        plt.plot(net_acc_dict[pros], label = 'process: '+str(pros))
+#    plt.legend(loc='best')
+#    plt.savefig('Loss_vs_iteration.png')
 
+# Saving Variables
+    with open("loss_iteration.txt", "wb") as myFile:
+        pickle.dump(net_acc_dict, myFile)
