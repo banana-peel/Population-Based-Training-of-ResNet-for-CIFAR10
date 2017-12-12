@@ -144,6 +144,7 @@ def return_top_arg(inp_dict,val_acc):
             the calling process itself is not in top 20. Else return None
     '''
     import operator
+    import numpy as np
     req_range = sorted(inp_dict.values())[int(len(inp_dict)*0.8):]
     if val_acc >= req_range[0]:
         return None
@@ -201,6 +202,7 @@ if __name__ == "__main__":
     
     processes = []
     for rank in range(2):
+        net_acc_dict[rank] = []
         p = mp.Process(target=training_cifar_multi, \
             args = (train_state_dict, val_acc_dict, net_acc_dict ,rank,return_top_arg))
         p.start()
