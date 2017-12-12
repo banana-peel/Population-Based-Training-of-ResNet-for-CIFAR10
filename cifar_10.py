@@ -73,6 +73,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     
 
     while epoch <= 13:
+        model.train(True)
         total = 0
         correct = 0
         running_loss = 0.0
@@ -94,9 +95,10 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     
             # print statistics
             running_loss += loss.data[0]
-            if i % 100 == 99:    # print every 2000 mini-batches
+            if i % 1000 == 999:    # print every 2000 mini-batches
                 print('process =', name, '[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 100))
+                net_acc_dict[name].append(running_loss/100)
                 running_loss = 0.0
             
             if i==13:
@@ -106,7 +108,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
         train_state_dict[name] = {'state_dict': model.state_dict(), 'optimizer': 
                         optimizer.state_dict(), 'epoch':epoch}
         
-            
+        model.eval()
         for ix, (val_img,val_label) in enumerate(val_dataloader):
             val_outputs = model(Variable(val_img))
             _, predicted = torch.max(val_outputs.data, 1)
@@ -115,7 +117,6 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
         valid_accuracy = 100*correct/total
         print("Validation accuracy = ", valid_accuracy)
         val_acc_dict[name] = valid_accuracy
-        net_acc_dict[name].append(valid_accuracy)
         total=0
         correct=0
     
@@ -129,7 +130,13 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
         
         epoch += 1
             
-        
+    for ix, (test_img,test_label) in enumerate(test_dataloader):
+        test_outputs = model(Variable(test_img))
+        _, predicted = torch.max(test_outputs.data, 1)
+        total += test_label.size(0)
+        correct += (predicted == test_label).sum()
+    test_accuracy = 100*correct/total
+    print("Testing accuracy = ", test_accuracy)
         
         
         
