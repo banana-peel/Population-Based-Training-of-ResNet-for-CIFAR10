@@ -20,14 +20,15 @@ Created on Mon Dec  4 18:29:30 2017
 #
 #import timeit
 #
+#import matplotlib
 #import matplotlib.pyplot as plt
+#matplotlib.use('Agg')
 #import load_cifar_data as ld
 #from torchvision.models import resnet
 #import cifar_resnet as cr
 
 import torch.multiprocessing as mp
 import pickle
-
 #Load images
 
 
@@ -43,7 +44,7 @@ import pickle
 
 
 
-def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,return_top_arg):
+def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,return_top_arg,learn_rate):
     import torch
     import torch.nn as nn
     import torch.optim as optim
@@ -67,14 +68,14 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     model = cr.ResNet56()
     
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0001)
+    optimizer = optim.SGD(model.parameters(), lr=learn_rate , momentum=0.9, weight_decay=0.0001)
     
     dataloader, val_dataloader, test_dataloader = ld.create_dataloader()
     epoch = 0
     
 
     while epoch <= 13:
-        model.train(True)
+	model.train(True)
         total = 0
         correct = 0
         running_loss = 0.0
@@ -99,15 +100,16 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
             if i % 1000 == 999:    # print every 2000 mini-batches
                 print('process =', name, '[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 1000))
-                net_acc_dict[name].append(running_loss/1000)
-                running_loss = 0.0
-            
+		net_acc_dict[name].append(running_loss/1000)               
+		running_loss = 0.0
+
     
     #Saving model to manager
+	model.eval()
         train_state_dict[name] = {'state_dict': model.state_dict(), 'optimizer': 
                         optimizer.state_dict(), 'epoch':epoch}
         
-        model.eval()
+            
         for ix, (val_img,val_label) in enumerate(val_dataloader):
             val_outputs = model(Variable(val_img))
             _, predicted = torch.max(val_outputs.data, 1)
@@ -135,8 +137,11 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
         total += test_label.size(0)
         correct += (predicted == test_label).sum()
     test_accuracy = 100*correct/total
-    print("Testing accuracy = ", test_accuracy)
-        
+    print("Testing accuracy = ", test_accuracy)        
+   
+    with open("model_dict_"+str(rank)+".txt", "wb") as myFile:
+        pickle.dump(model.state_dict(), myFile)
+
         
         
         
@@ -161,7 +166,7 @@ def return_top_arg(inp_dict,val_acc):
     
 #correct = 0
 #total = 0
-#for epoch in range(2):  # loop over the dataset multiple times
+#for epoch in range(4):  # loop over the dataset multiple times
 #
 #    running_loss = 0.0
 #    for i, data in enumerate(dataloader, 0):
@@ -205,24 +210,17 @@ if __name__ == "__main__":
     train_state_dict = mp.Manager().dict()
     val_acc_dict = mp.Manager().dict()
     net_acc_dict = mp.Manager().dict()
-    
+    learn_rate = [0.01, 0.06, 0.001, 0.008]
     processes = []
-    for rank in range(2):
-        net_acc_dict[rank] = []
+    for rank in range(4):
+	net_acc_dict[rank] = []
         p = mp.Process(target=training_cifar_multi, \
-            args = (train_state_dict, val_acc_dict, net_acc_dict ,rank,return_top_arg))
+            args = (train_state_dict, val_acc_dict, net_acc_dict ,rank,return_top_arg, learn_rate[rank]))
         p.start()
         processes.append(p)
     for p in processes:
         p.join()
 
-# Plotting Graphs
-#    plt.figure()
-#    for pros in net_acc_dict.keys():
-#        plt.plot(net_acc_dict[pros], label = 'process: '+str(pros))
-#    plt.legend(loc='best')
-#    plt.savefig('Loss_vs_iteration.png')
-
-# Saving Variables
+# Saving files for plotting later
     with open("loss_iteration.txt", "wb") as myFile:
         pickle.dump(net_acc_dict, myFile)
