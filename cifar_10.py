@@ -26,6 +26,7 @@ Created on Mon Dec  4 18:29:30 2017
 #import cifar_resnet as cr
 import torch
 import torch.multiprocessing as mp
+from torch.multiprocessing import set_start_method
 import pickle
 
 #Load images
@@ -204,6 +205,10 @@ def return_top_arg(inp_dict,val_acc):
 #print('Finished Training')
 
 if __name__ == "__main__":
+    try:
+        set_start_method('spawn')
+    except RuntimeError:
+        pass
     train_state_dict = mp.Manager().dict()
     val_acc_dict = mp.Manager().dict()
     net_acc_dict = mp.Manager().dict()
