@@ -6,41 +6,9 @@ Created on Mon Dec  4 18:29:30 2017
 @author: saurabh
 """
 
-#import torch
-#import torch.nn as nn
-#import torch.optim as optim
-#from torch.autograd import Variable
-#from torch.utils.data import DataLoader, Dataset
-#from torch.utils.data import sampler
-#
-#import torchvision.datasets as dset
-#import torchvision.transforms as T
-#
-#import numpy as np
-#
-#import timeit
-#
-#import matplotlib
-#import matplotlib.pyplot as plt
-#matplotlib.use('Agg')
-#import load_cifar_data as ld
-#from torchvision.models import resnet
-#import cifar_resnet as cr
-
 import torch.multiprocessing as mp
 import pickle
-#Load images
 
-
-
-    
-
-#
-## Defining Loss function and optimizer
-#criterion = nn.CrossEntropyLoss()
-#optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0001)
-
-# Training the network
 
 
 
@@ -49,21 +17,11 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     import torch.nn as nn
     import torch.optim as optim
     from torch.autograd import Variable
-#    from torch.utils.data import DataLoader, Dataset
-#    from torch.utils.data import sampler
-    
-#    import torchvision.datasets as dset
-#    import torchvision.transforms as T
-    
     import numpy as np
-    
-#    import timeit
-    
-#    import matplotlib.pyplot as plt
     import load_cifar_data as ld
     import cifar_resnet as cr
     
-#    import torch.multiprocessing as mp
+
     
     model = cr.ResNet56()
     
@@ -75,7 +33,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     
 
     while epoch <= 13:
-	model.train(True)
+        model.train(True)
         total = 0
         correct = 0
         running_loss = 0.0
@@ -100,12 +58,12 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
             if i % 1000 == 999:    # print every 2000 mini-batches
                 print('process =', name, '[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 1000))
-		net_acc_dict[name].append(running_loss/1000)               
-		running_loss = 0.0
+                net_acc_dict[name].append(running_loss/1000)               
+                running_loss = 0.0
 
     
     #Saving model to manager
-	model.eval()
+        model.eval()
         train_state_dict[name] = {'state_dict': model.state_dict(), 'optimizer': 
                         optimizer.state_dict(), 'epoch':epoch}
         
@@ -164,47 +122,7 @@ def return_top_arg(inp_dict,val_acc):
     req_key = sorted_dict[-indx-1][0]
     return req_key
     
-#correct = 0
-#total = 0
-#for epoch in range(4):  # loop over the dataset multiple times
-#
-#    running_loss = 0.0
-#    for i, data in enumerate(dataloader, 0):
-#        # get the inputs
-#        inputs, labels = data
-#
-#        # wrap them in Variable
-#        inputs, labels = Variable(inputs), Variable(labels)
-#
-#        # zero the parameter gradients
-#        optimizer.zero_grad()
-#
-#        # forward + backward + optimize
-#        outputs = model(inputs)
-#        loss = criterion(outputs, labels)
-#        loss.backward()
-#        optimizer.step()
-#
-#        # print statistics
-#        running_loss += loss.data[0]
-#        if i % 1000 == 999:
-#            val_outputs = model(Variable(val_img))
-#            _, predicted = torch.max(outputs.data, 1)
-#            total += labels.size(0)
-#            correct += (predicted == labels).sum()
-#            print("Validation accuracy = ", 100*correct/total)
-#            total=0
-#            correct=0
-#        if i % 100 == 99:    # print every 2000 mini-batches
-#            break
-#            print('[%d, %5d] loss: %.3f' %
-#                  (epoch + 1, i + 1, running_loss / 100))
-#            running_loss = 0.0
-#    break
-#
-#print(optimizer.state_dict())
-#
-#print('Finished Training')
+
 
 if __name__ == "__main__":
     train_state_dict = mp.Manager().dict()
