@@ -131,7 +131,7 @@ if __name__ == "__main__":
     learn_rate = [0.01, 0.06, 0.001, 0.008]
     processes = []
     for rank in range(4):
-	net_acc_dict[rank] = []
+        net_acc_dict[rank] = []
         p = mp.Process(target=training_cifar_multi, \
             args = (train_state_dict, val_acc_dict, net_acc_dict ,rank,return_top_arg, learn_rate[rank]))
         p.start()
