@@ -68,6 +68,8 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     model = cr.ResNet56()
     model.cuda(rank)
     
+    net_acc_dict[name]
+    
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learn_rate, momentum=0.9, weight_decay=0.0001)
     
@@ -101,7 +103,9 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
             if i % 1000 == 999:    # print every 2000 mini-batches
                 print('process =', name, '[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 1000))
-                net_acc_dict[name].append(running_loss/1000)
+                temp_dict = net_acc_dict[name]
+                temp_dict.append(running_loss / 1000)
+                net_acc_dict[name] = temp_dict
                 running_loss = 0.0
             if i==3:
                 break
