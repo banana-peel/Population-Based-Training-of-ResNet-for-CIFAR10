@@ -24,6 +24,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
 
     
     model = cr.ResNet56()
+    net_acc_dict[name] = []
     
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learn_rate , momentum=0.9, weight_decay=0.0001)
@@ -55,11 +56,16 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     
             # print statistics
             running_loss += loss.data[0]
-            if i % 1000 == 999:    # print every 2000 mini-batches
+            if i % 10 == 2:    # print every 2000 mini-batches
                 print('process =', name, '[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 1000))
-                net_acc_dict[name].append(running_loss/1000)               
+                temp_list  = net_acc_dict[name]
+                temp_list.append(running_loss / 1000)
+                net_acc_dict[name] = temp_list
                 running_loss = 0.0
+            
+            if i == 4:
+                break
 
     
     #Saving model to manager
@@ -131,7 +137,6 @@ if __name__ == "__main__":
     learn_rate = [0.01, 0.06, 0.001, 0.008]
     processes = []
     for rank in range(4):
-        net_acc_dict[rank] = []
         p = mp.Process(target=training_cifar_multi, \
             args = (train_state_dict, val_acc_dict, net_acc_dict ,rank,return_top_arg, learn_rate[rank]))
         p.start()
