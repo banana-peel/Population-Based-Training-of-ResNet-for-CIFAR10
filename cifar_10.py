@@ -73,8 +73,8 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
                 temp_dict.append(running_loss / 1000)
                 net_acc_dict[name] = temp_dict
                 running_loss = 0.0
-            if i==3:
-                break
+#            if i==3:
+#                break
     
     #Saving model to manager
         train_state_dict[name] = {'state_dict': model.state_dict(), 'optimizer': 
