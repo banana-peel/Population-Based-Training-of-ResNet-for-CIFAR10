@@ -32,7 +32,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
 
     
     model = cr.ResNet56()
-    model.cuda(rank)
+    model.cuda(name)
     
     net_acc_dict[name]
     
