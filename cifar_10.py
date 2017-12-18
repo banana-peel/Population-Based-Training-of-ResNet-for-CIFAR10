@@ -56,7 +56,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
     
             # print statistics
             running_loss += loss.data[0]
-            if i % 1000 == 999:    # print every 2000 mini-batches
+            if i % 1000 == 999:    # print every 1000 mini-batches
                 print('process =', name, '[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 1000))
                 temp_list  = net_acc_dict[name]
