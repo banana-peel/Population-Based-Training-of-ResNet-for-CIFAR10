@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Dec  4 18:29:30 2017
 
-@author: saurabh
-"""
 
 
 import torch
@@ -32,7 +28,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
 
     
     model = cr.ResNet56()
-    model.cuda(name)
+    model.cuda(0)
     
     net_acc_dict[name]
     
@@ -53,7 +49,7 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
             inputs, labels = data
     
             # wrap them in Variable
-            inputs, labels = Variable(inputs), Variable(labels)
+            inputs, labels = Variable(inputs).cuda(), Variable(labels).cuda()
     
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -73,8 +69,8 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
                 temp_dict.append(running_loss / 1000)
                 net_acc_dict[name] = temp_dict
                 running_loss = 0.0
-#            if i==3:
-#                break
+            if i==3:
+                break
     
     #Saving model to manager
         train_state_dict[name] = {'state_dict': model.state_dict(), 'optimizer': 
@@ -82,10 +78,10 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
         
         model.eval()
         for ix, (val_img,val_label) in enumerate(val_dataloader):
-            val_outputs = model(Variable(val_img))
+            val_outputs = model(Variable(val_img).cuda())
             _, predicted = torch.max(val_outputs.data, 1)
             total += val_label.size(0)
-            correct += (predicted == val_label).sum()
+            correct += (predicted == val_label.cuda()).sum()
         valid_accuracy = 100*correct/total
         print("Validation accuracy = ", valid_accuracy)
         val_acc_dict[name] = valid_accuracy
@@ -103,10 +99,10 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
         epoch += 1
             
     for ix, (test_img,test_label) in enumerate(test_dataloader):
-        test_outputs = model(Variable(test_img))
+        test_outputs = model(Variable(test_img).cuda())
         _, predicted = torch.max(test_outputs.data, 1)
         total += test_label.size(0)
-        correct += (predicted == test_label).sum()
+        correct += (predicted == test_label.cuda()).sum()
     test_accuracy = 100*correct/total
     print("Testing accuracy = ", test_accuracy)
         
@@ -144,9 +140,9 @@ if __name__ == "__main__":
     net_acc_dict = mp.Manager().dict()
     print(torch.cuda.device_count())
     processes = []
-    for rank in range(4):
+    for rank in range(2):
         net_acc_dict[rank] = []
-        learning_rate = [0.01, 0.06, 0.001, 0.008]
+        learning_rate = [0.4, 0.006]
         p = mp.Process(target=training_cifar_multi, \
             args = (train_state_dict, val_acc_dict, net_acc_dict ,rank, \
                     return_top_arg, learning_rate[rank]))
