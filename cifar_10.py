@@ -13,6 +13,13 @@ import pickle
 
 
 def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,return_top_arg,learn_rate):
+    '''
+    This is the main training code. It will use the definitions present in cifar_resnet
+    and load_cifar_data to initialize the model and load the datasets into the input 
+    pipeline. It will run for 13 epochs. At the end of each epoch it will calculate
+    the accuracy on the validation set and depending on the performance explore and 
+    exploit other models. Test error is calculated at the end.
+    '''
     import torch
     import torch.nn as nn
     import torch.optim as optim
@@ -66,12 +73,12 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
             
 
     
-    #Saving model to manager
+        #Saving model to manager
         model.eval()
         train_state_dict[name] = {'state_dict': model.state_dict(), 'optimizer': 
                         optimizer.state_dict(), 'epoch':epoch}
         
-            
+        #Getting validation accuracy   
         for ix, (val_img,val_label) in enumerate(val_dataloader):
             val_outputs = model(Variable(val_img))
             _, predicted = torch.max(val_outputs.data, 1)
@@ -82,7 +89,9 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
         val_acc_dict[name] = valid_accuracy
         total=0
         correct=0
-    
+        
+        #Depending on the performance explore and exploit other models randomly
+        #selecting from the top 20% best performers
         flag = return_top_arg(val_acc_dict, valid_accuracy)
         if flag:
             model.load_state_dict(train_state_dict[flag]['state_dict'])
@@ -92,7 +101,8 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
                 param_group['lr'] = (np.random.uniform(0.5,2,1)[0])*param_group['lr']
         
         epoch += 1
-            
+    
+    #Calculate Test Accuracy       
     for ix, (test_img,test_label) in enumerate(test_dataloader):
         test_outputs = model(Variable(test_img))
         _, predicted = torch.max(test_outputs.data, 1)
@@ -100,7 +110,8 @@ def training_cifar_multi(train_state_dict, val_acc_dict, net_acc_dict ,name,retu
         correct += (predicted == test_label).sum()
     test_accuracy = 100*correct/total
     print("Testing accuracy = ", test_accuracy)        
-   
+    
+    #Save the final model
     with open("model_dict_"+str(rank)+".txt", "wb") as myFile:
         pickle.dump(model.state_dict(), myFile)
 
